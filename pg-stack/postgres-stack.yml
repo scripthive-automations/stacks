@@ -1,0 +1,53 @@
+services:
+  postgres:
+    image: postgres:17.2
+    env_file:
+      - /root/pg-stack/.env.pgstack
+    volumes:
+      - /root/pg-stack/postgresql_data:/var/lib/postgresql/data
+      - /root/pg-stack/postgresql:/var/lib/postgresql
+    deploy:
+      placement:
+        constraints:
+          - node.role == manager
+    ports:
+      - target: 5432
+        published: 5433
+        protocol: tcp
+        mode: host
+    networks:
+      - network_public
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    env_file:
+      - /root/pg-stack/.env.pgstack
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    ports:
+      - target: 80
+        published: 5050
+        mode: host
+    deploy:
+      placement:
+        constraints:
+          - node.role == manager
+    networks:
+      - network_public
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.typebot_builder.rule=Host(pgadmin.scripthive.com.br)
+      - traefik.http.routers.typebot_builder.entrypoints=websecure
+      - traefik.http.routers.typebot_builder.tls.certresolver=letsencryptresolver
+      - traefik.http.services.typebot_builder.loadbalancer.server.port=80
+      - traefik.http.services.typebot_builder.loadbalancer.passHostHeader=true
+      - traefik.http.routers.typebot_builder.service=pgadmin
+
+networks:
+  network_public:
+    external: true
+    name: network_public
+
+volumes:
+  pgadmin_data:
+    driver: local
