@@ -1,3 +1,5 @@
+# DON'T FORGET TO CREATE THE FOLDERS /root/pg-stack/postgresql_data AND /root/pg-stack/postgresql WHEREVER YOU WANT IT TO BE.
+# ALSO, DON'T FORGET TO HAVE THE FILE /root/pg-stack/.env.pgstack CREATED AND WITH THE CORRECT SECRETS
 services:
   postgres:
     image: postgres:17.2
