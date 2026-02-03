@@ -1,0 +1,46 @@
+version: '3.8'
+
+services:
+  infisical:
+    image: infisical/infisical:latest
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 120s
+      update_config:
+        parallelism: 1
+        delay: 10s
+        order: start-first
+      placement:
+        constraints:
+          - node.role == manager
+      labels:
+        - "traefik.enable=true"
+        - "traefik.docker.network=network_public"
+        - "traefik.http.routers.infisical.rule=Host(`infisical.scripthive.com.br`)"
+        - "traefik.http.routers.infisical.entrypoints=websecure"
+        - "traefik.http.routers.infisical.tls=true"
+        - "traefik.http.routers.infisical.tls.certresolver=cloudflare"
+        - "traefik.http.services.infisical.loadbalancer.server.port=8080"
+        # Healthcheck do Traefik
+        - "traefik.http.services.infisical.loadbalancer.healthcheck.path=/"
+        - "traefik.http.services.infisical.loadbalancer.healthcheck.interval=30s"
+    ports:
+      - "8777:8080"
+    env_file:
+      - /root/infisical/.env.infisical
+    networks:
+      - network_public
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8080/ >/dev/null 2>&1 || exit 1"]
+      interval: 20s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+networks:
+  network_public:
+    external: true
