@@ -1,0 +1,39 @@
+version: "3.8"
+
+services:
+  dockhand:
+    image: fnsys/dockhand:latest
+    networks:
+      - network_public
+    ports:
+      - "9001:3000"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - dockhand_data:/app/data
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 120s
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.dockhand.rule=Host(`docker.scripthive.com.br`)"
+        - "traefik.http.routers.dockhand.entrypoints=websecure"
+        - "traefik.http.routers.dockhand.tls=true"
+        - "traefik.http.routers.dockhand.tls.certresolver=letsencrypt"
+        - "traefik.http.services.dockhand.loadbalancer.server.port=3000"
+        - "traefik.docker.network=network_public"
+
+volumes:
+  dockhand_data:
+    driver: local
+
+networks:
+  network_public:
+    external: true
